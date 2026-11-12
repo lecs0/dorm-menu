@@ -1,0 +1,26 @@
+/target/
+/data/
+.env
+*.keystore
+local.properties
+.gradle/
+**/build/
+**/jniLibs/
+
+__pycache__/
+*.pyc
+/deploy/data/
+/deploy/config/
+tokens.json
+*.jks
+
+# Local credentials and private device captures
+.env.*
+*.env
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*.json
+tunnel.json
+app/android/design/verification/

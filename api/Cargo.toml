@@ -1,0 +1,30 @@
+[package]
+name = "dorm-api"
+version = "0.1.0"
+edition = "2021"
+[features]
+nas-legacy-clock = []
+
+[dependencies]
+libc = "0.2"
+dorm-shared = { path = "../shared" }
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+sha2.workspace = true
+anyhow.workspace = true
+chrono-tz = "0.10"
+axum = "0.8"
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"] }
+scraper = "0.24"
+regex = "1"
+url = "2"
+roxmltree = "0.21"
+hex = "0.4"
+subtle = "2"
+rand = "0.8"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tower = { version = "0.5", features = ["util", "timeout"] }
+fs2 = "0.4"

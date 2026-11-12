@@ -1,0 +1,8 @@
+# Example for a locally managed tunnel on the NAS host. Replace all placeholders.
+tunnel: YOUR-TUNNEL-UUID
+credentials-file: /secure/path/YOUR-TUNNEL-UUID.json
+ingress:
+  - hostname: menu.example.com
+    path: ^/api/v1/menus(/current|/next)?$
+    service: http://127.0.0.1:3000
+  - service: http_status:404
