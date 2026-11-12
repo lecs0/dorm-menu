@@ -1,12 +1,25 @@
-# Dorm menu
+# Kollégiumi menü
 
-Rust API and Android client for the Radnóti/III. Béla menus on Baja's municipality website. Built from the real week 45/46 PDFs inspected on 2026-11-11. HTTPS is available and used.
+A Hungarian dormitory menu app for Android, backed by a self-hosted Rust API. It reads the published Radnóti / III. Béla dormitory menu PDFs from the Baja municipality website and makes the meals easier to browse on a phone.
 
-The server discovers only the intended section, preserves unlinked future entries, validates the inspected PDF layout, and retains good data on failures. The Android source uses a Rust domain core and a native Kotlin shell with offline cache, encrypted tokens, keyword highlights and optional local reminders.
+**[Download the current Android test build](https://koliapp.lecso.me/)** · [API documentation](docs/api.md) · [Android build guide](docs/mobile-build.md)
 
-## Run on Linux
+## Features
 
-Install a current Rust toolchain and Poppler (`pdftotext`; Debian/Ubuntu package `poppler-utils`). The dependency lockfile is included.
+- Browse the current and upcoming weekly menus by day and meal.
+- Highlight selected keywords and source allergen codes, and set optional reminders for tomorrow's meals.
+- Keep the last downloaded menu available offline; store the device token using Android Keystore.
+- Automatically discover and parse source PDFs, retain the last validated menu on failure, and retry failed updates.
+- Expose a token-protected API and a small Android download page.
+- Run the server on Linux, including the tested ARMv7 NAS deployment.
+
+The app displays allergen codes as published. The source PDFs inspected for this project did not provide a verified legend, so the app does not assign meanings to the codes. Confirm dietary requirements with the dormitory.
+
+## Getting started
+
+The download is the current **debug/test APK** for ARM64 devices running Android 8.0 or newer. It is not a production-signed release. The running server requires a device access token; contact the app maintainer for one. Never commit tokens, signing keys, Cloudflare credentials, or local configuration.
+
+To run your own API on Linux, install Rust and Poppler (`pdftotext`, provided by `poppler-utils` on Debian/Ubuntu):
 
 ```sh
 cargo test --workspace --locked
@@ -16,7 +29,7 @@ chmod 700 data
 cargo run -p dorm-api -- token
 ```
 
-The last command prints a new random token and its SHA-256 verifier. Give the token to one user/device. Put only its verifier into `data/tokens.json`:
+The last command generates a device token and its SHA-256 verifier. Keep the token private and place only its verifier in `data/tokens.json`:
 
 ```json
 {"my-phone":"REPLACE_WITH_PRINTED_SHA256_VERIFIER"}
@@ -28,28 +41,21 @@ cargo run -p dorm-api -- check
 RUST_LOG=info cargo run -p dorm-api
 ```
 
-The API binds `127.0.0.1:3000` by default and refreshes independently at startup and on its schedule. `check` is for when the server is stopped; while running, signal its process with `kill -USR1 SERVER_PID`. Configuration is by `DATA_DIR`, `TOKEN_FILE`, `BIND`, `CHECK_INTERVAL_SECONDS` (minimum one hour), and `RATE_LIMIT_RPM`.
+The API listens on `127.0.0.1:3000` by default. To make it available to phones, use HTTPS with a reverse proxy or tunnel and keep the health endpoint and NAS administration private. See [API documentation](docs/api.md) and [deployment notes](docs/deployment.md) for configuration, authentication, and deployment details.
 
-```sh
-curl http://127.0.0.1:3000/health
-# Enter your token interactively; don't put it into a committed script.
-read -rs DORM_TOKEN
-curl -H "Authorization: Bearer $DORM_TOKEN" http://127.0.0.1:3000/api/v1/menus
-unset DORM_TOKEN
-```
+The download page and APK in `website/dist/` are embedded in the API build. Updating the Android APK on the website requires replacing that file and rebuilding and redeploying the API.
 
-Public use requires HTTPS through a tunnel/reverse proxy. Never expose the NAS administration interface. Rotate/revoke a device by atomically replacing its verifier in the token file; the API rereads it for every authenticated request.
+## Project layout
 
-The tested ARMv7 bundle is available locally at `target/dorm-menu-nas-bundle.tar.gz` (about 15 MB). It includes a private Poppler runtime and startup wrapper; production service/account setup is still required.
+- `api/` — Rust scraper, PDF parser, authenticated API, and download routes.
+- `shared/` — shared menu data structures.
+- `app/` — Rust mobile core and native Android interface.
+- `website/` — download page and the current test APK.
+- `fixtures/` — inspected source-page and menu examples used by tests.
+- `deploy/`, `scripts/`, and `docs/` — deployment helpers, build scripts, and technical documentation.
 
-## Documentation
+## Development and limitations
 
-- [Real source inspection](docs/source-inspection.md)
-- [Architecture and mobile framework comparison](docs/architecture.md)
-- [API contract](docs/api.md)
-- [NAS, ARMv7, Docker and Cloudflare deployment](docs/deployment.md)
-- [Android build and behavior](docs/mobile-build.md)
-- [Troubleshooting](docs/troubleshooting.md)
-- [Stage completion and verification limits](docs/validation.md)
+See [Android build and behavior](docs/mobile-build.md), [architecture](docs/architecture.md), [source inspection](docs/source-inspection.md), and [validation](docs/validation.md). The PDFs use graphical header dates that text extraction cannot verify automatically; the included examples were checked visually. PDF layouts and the source website may change and require parser updates.
 
-The PDF headers contain graphical dates that text extraction omits. Both supplied headers were visually cross-checked; automatic future-header date verification is not implemented. Allergen codes have no legend in these samples and remain uninterpreted. The static ARMv7 API and private Poppler bundle passed a live NAS test, using about 3.6 MB API resident memory afterward. A signed ARM64 Android debug APK was built and verified at `app/android/app/build/outputs/apk/debug/app-debug.apk` (about 1.6 MB). Phone installation, Docker deployment and tunnel connectivity remain unverified. See the validation report for the exact scope.
+The Android application and website are credited to **Lecs0**.
